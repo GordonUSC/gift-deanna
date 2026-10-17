@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- STYLE: Transit map of the games industry (cream paper, bright line primaries, Fredoka with Nunito Sans) | WHY: Deanna is the Career Strategist for USC Games who maps students toward every corner of the industry, so the gift is a subway map where she sends a train down every line | ALT: Constellation of career stars, rejected because a star mobile is already in this set -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>All Lines Open</title>
+<meta name="description" content="A transit map of the industry, for Deanna.">
+<meta property="og:title" content="All Lines Open, for Deanna">
+<meta property="og:image" content="https://gordonusc.github.io/gift-deanna/img/hero.jpg">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito+Sans:wght@600;800&display=swap">
+<style>
+:root{--ink:#1d2a4a;--cream:#fbf5e6;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#efe6cf;color:var(--ink);font:15px/1.45 "Nunito Sans",system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.stage{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,calc(100svh*9/16));overflow:hidden;background:var(--cream)}
+.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.card{position:absolute;left:50%;top:58%;transform:translateX(-50%);width:min(78%,300px);background:#fbf5e6f2;border:3px solid var(--ink);border-radius:14px;padding:10px 12px;text-align:center;box-shadow:0 6px 0 var(--ink);pointer-events:none}
+.card small{font-weight:800;font-size:10px;letter-spacing:.28em}
+.card h1{font:700 clamp(24px,7.6vw,32px)/1.05 Fredoka,sans-serif;margin:2px 0 4px}
+.card p{margin:0;font-size:13px}
+.card .n{display:inline-block;margin-top:6px;font-weight:800;font-size:12px;letter-spacing:.14em;background:var(--ink);color:var(--cream);border-radius:20px;padding:3px 10px}
+.end{position:absolute;left:50%;top:58%;transform:translateX(-50%) scale(.9);width:min(84%,320px);background:var(--ink);color:var(--cream);border-radius:16px;padding:16px;text-align:center;opacity:0;transition:all .6s;pointer-events:none}
+.end.on{opacity:1;transform:translateX(-50%) scale(1)}
+.end h2{font:700 26px/1.1 Fredoka,sans-serif;margin:0 0 6px;color:#ffd23f}
+.foot{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 6px);text-align:center;font-size:11px;font-weight:800;opacity:.75;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <img class="bg" src="img/hero.jpg" alt="A transit map with colorful lines running from one central hub to stations marked by a film camera, a paintbrush, headphones, a controller, a rocket and a book">
+  <canvas id="c"></canvas>
+  <div class="card" id="card"><small>FOR DEANNA</small><h1>All Lines Open</h1><p>Every line starts at the hub. Tap each end station to send a train. Sound on.</p><span class="n" id="n">0 / 6 LINES</span></div>
+  <div class="end" id="end"><h2>All lines open.</h2>Film, art, sound, games, startups, story. Thank you, Deanna, for showing every student there is a line with their name on it.</div>
+  <div class="foot">made by Darby, Gordon's AI assistant, with love from Gordon</div>
+</div>
+<script>
+// ElevenLabs sound design: station chime, breezy commute jazz bed, train arrival bell. Code only mixes.
+const SND=['chime','bed','arrive'];
+let ac=null, master=null, bufs={};
+function audio(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); master=ac.createGain(); master.gain.value=.9; master.connect(ac.destination); SND.forEach(load);}catch(e){} } if(ac&&ac.state==='suspended') ac.resume(); return ac; }
+async function load(n){ if(bufs[n]) return bufs[n]; try{ const r=await fetch('snd/'+n+'.mp3'); const a=await r.arrayBuffer(); bufs[n]=await new Promise((ok,no)=>ac.decodeAudioData(a,ok,no)); }catch(e){} return bufs[n]; }
+async function play(n,vol=1,loop=false,rate=1){ if(!audio()) return null; const b=await load(n); if(!b) return null; const s=ac.createBufferSource(), g=ac.createGain(); s.buffer=b; s.loop=loop; s.playbackRate.value=rate; g.gain.value=vol; s.connect(g).connect(master); s.start(); return {s,g}; }
+const HUB={u:.505,v:.485};
+const ST=[{u:.16,v:.07,n:'FILM',c:'#e63946'},{u:.835,v:.07,n:'ART',c:'#f4b400'},{u:.08,v:.415,n:'SOUND',c:'#2a9d4b'},{u:.925,v:.415,n:'GAMES',c:'#1e88e5'},{u:.155,v:.9,n:'STARTUPS',c:'#7b3fa0'},{u:.83,v:.9,n:'STORY',c:'#1e88e5'}];
+const c=document.getElementById('c'), x=c.getContext('2d'), D=Math.min(devicePixelRatio||1,2);
+function size(){ c.width=c.clientWidth*D; c.height=c.clientHeight*D; } size(); addEventListener('resize',size);
+let trains=[], bed=null, count=0, done=false;
+c.addEventListener('pointerdown',e=>{ if(done) return; audio(); if(!bed) play('bed',.4,true).then(h=>bed=h);
+  const r=c.getBoundingClientRect(), px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+  let best=null, bd=1e9; ST.forEach(s=>{ const d=Math.hypot((px-s.u)*r.width,(py-s.v)*r.height); if(d<bd){bd=d;best=s;} });
+  if(!best||bd>70||best.sent) return; best.sent=true; count++; document.getElementById('n').textContent=count+' / 6 LINES';
+  play('chime',.8,false,1+count*.05); trains.push({s:best,t:performance.now()});
+  if(count===6){ done=true; setTimeout(()=>{ play('arrive',.85); document.getElementById('card').style.opacity=0; document.getElementById('end').classList.add('on'); },1200); } });
+(function loop(now){ x.clearRect(0,0,c.width,c.height); const W=c.width,H=c.height;
+  ST.forEach(s=>{ if(!s.sent){ const p=.5+.5*Math.sin(now/300+s.u*7); x.strokeStyle=s.c; x.globalAlpha=.4+.5*p; x.lineWidth=4*D; x.beginPath(); x.arc(s.u*W,s.v*H,(30+6*p)*D,0,7); x.stroke(); x.globalAlpha=1; } });
+  trains.forEach(tr=>{ const k=Math.min(1,(now-tr.t)/1100), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2; const ax=HUB.u*W, ay=HUB.v*H, bx=tr.s.u*W, by=tr.s.v*H;
+    x.strokeStyle=tr.s.c; x.lineWidth=9*D; x.lineCap='round'; x.globalAlpha=.85; x.beginPath(); x.moveTo(ax,ay); x.lineTo(ax+(bx-ax)*e,ay+(by-ay)*e); x.stroke(); x.globalAlpha=1;
+    x.fillStyle='#fff'; x.strokeStyle='#1d2a4a'; x.lineWidth=3*D; x.beginPath(); x.arc(ax+(bx-ax)*e,ay+(by-ay)*e,9*D,0,7); x.fill(); x.stroke();
+    if(k>=1){ x.font=`800 ${12*D}px "Nunito Sans",sans-serif`; x.textAlign='center'; const ty=tr.s.v<.5?by+52*D:by-48*D; const tw=x.measureText(tr.s.n).width+16*D, lx=Math.min(Math.max(bx,tw/2+6*D),W-tw/2-6*D); x.fillStyle='#1d2a4a'; x.fillRect(lx-tw/2,ty-14*D,tw,20*D); x.fillStyle='#fbf5e6'; x.fillText(tr.s.n,lx,ty+1*D); } });
+  requestAnimationFrame(loop); })(0);
+</script>
+</body>
+</html>

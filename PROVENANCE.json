@@ -1,0 +1,18 @@
+{
+ "img/hero.jpg": {
+  "tool": "higgsfield",
+  "prompt": "transit map of game industry neighborhoods (job 508c187d) gpt_image_2_5"
+ },
+ "snd/chime.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "two-tone station chime (flow Zsme1gDAAwoH9cLbT2KJ)"
+ },
+ "snd/arrive.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "train arrival bell (flow Zsme1gDAAwoH9cLbT2KJ)"
+ },
+ "snd/bed.mp3": {
+  "tool": "elevenlabs",
+  "prompt": "commute jazz-pop loop, eleven_music_v2_5, 2s crossfade baked (flow Zsme1gDAAwoH9cLbT2KJ)"
+ }
+}
